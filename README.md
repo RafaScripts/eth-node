@@ -1,39 +1,42 @@
-# Ethereum Node (Trin) + Monitoring Stack
+# Ethereum Node (Trin) + Monitoring Stack no Coolify
 
-Este projeto configura um nó da rede Ethereum Mainnet utilizando o **Trin** (cliente do Portal Network), mantendo o uso de disco abaixo de 240GB. O projeto também inclui uma stack completa de monitoramento e um explorador de blocos.
+Este projeto configura um nó da rede Ethereum Mainnet utilizando o **Trin** (cliente do Portal Network), mantendo o uso de disco abaixo de 240GB. O projeto também inclui uma stack de monitoramento e um explorador de blocos.
 
-## Arquitetura
-1. **Trin:** O cliente Ethereum que roda como um nó RPC na porta `8545`. Ocupa pouco espaço (limite configurado para 100GB).
-2. **Prometheus:** Coleta as métricas do Trin na porta `9005`.
-3. **Grafana:** Painel de monitoramento das métricas do nó (acessível na porta `3000`).
-4. **Ethereum Lite Explorer:** Um painel web leve para explorar os blocos, carteiras e transações (acessível na porta `8081`).
+Toda a estrutura foi otimizada para ser implantada facilmente através do **Coolify v4**.
 
-## Como rodar no seu servidor
+## Como realizar o Deploy no Coolify
 
-1. Copie a pasta `eth-node` para o seu servidor.
-2. Acesse a pasta no servidor via terminal:
-   ```bash
-   cd /caminho/para/eth-node
-   ```
-3. Inicie os contêineres em segundo plano:
-   ```bash
-   docker compose up -d
-   ```
+A melhor forma de subir essa stack no Coolify é utilizando o método de repositório Git, pois ele copiará os arquivos de configuração do Prometheus e do Grafana automaticamente.
 
-## Como acessar as interfaces
+### Passo 1: Suba este projeto para um repositório Git
+Crie um repositório no GitHub ou GitLab e faça o push de todos os arquivos desta pasta (`docker-compose.yml`, pasta `grafana/`, `prometheus.yml`, etc).
 
-Certifique-se de que as portas do seu servidor estão abertas/liberadas no firewall caso queira acessar remotamente, ou faça um túnel SSH.
+### Passo 2: Adicione o Recurso no Coolify
+1. Abra o painel do seu Coolify.
+2. Clique em **Add New Resource** e escolha a opção **Git Repository**.
+3. Selecione o repositório que você acabou de criar.
+4. Quando o Coolify perguntar o tipo de Build Pack, selecione **Docker Compose**.
+5. Em "Docker Compose Location", certifique-se de que está apontando para o arquivo `/docker-compose.yml`.
 
-- **Explorador de Blocos (Lite Explorer):** `http://<IP-DO-SERVIDOR>:8081`
-- **Grafana (Monitoramento):** `http://<IP-DO-SERVIDOR>:3000` (Login padrão: `admin` / Senha: `admin`)
-- **RPC do Ethereum:** `http://<IP-DO-SERVIDOR>:8545`
+### Passo 3: Configurar os Domínios (Opcional, mas Recomendado)
+Se você for apontar domínios (ex: `rpc.seusite.com`, `explorer.seusite.com`) para as suas ferramentas usando o proxy reverso do Coolify, siga estas instruções **antes de clicar em Deploy**:
 
-### Configurando o Lite Explorer
-Quando você abrir o Lite Explorer no navegador, ele tentará se conectar ao RPC. 
-No arquivo `docker-compose.yml`, a variável `APP_NODE_URL` está configurada como `http://localhost:8545`. Se você estiver acessando de outro computador (remotamente), você deve alterar essa variável no `docker-compose.yml` para o IP real do seu servidor, pois o explorador roda direto no navegador (client-side) e precisará chegar até a porta 8545 do servidor.
+No painel do Coolify, ele listará os seus containers (`trin`, `grafana`, `explorer`).
+- Para o **Trin**, adicione o seu domínio e direcione para a porta **8545**.
+- Para o **Grafana**, adicione o domínio e direcione para a porta **3000**.
+- Para o **Explorer**, adicione o domínio e direcione para a porta **80**.
 
-Exemplo de alteração no `docker-compose.yml`:
-```yaml
-environment:
-  - APP_NODE_URL=http://<IP-REAL-DO-SERVIDOR>:8545
-```
+### Passo 4: Configurar a URL do Explorer
+O Lite Explorer roda diretamente no navegador do usuário e precisa saber onde o seu RPC (Trin) está hospedado para buscar os blocos.
+No Coolify, vá em **Environment Variables** do seu recurso e adicione/altere a variável `APP_NODE_URL`:
+- Se você **não** configurou domínios: coloque `http://<IP-DO-SEU-SERVIDOR>:8545`
+- Se você **configurou** um domínio para o Trin: coloque `https://rpc.seusite.com` (o domínio escolhido).
+
+### Passo 5: Fazer o Deploy
+Clique em **Deploy** no Coolify! Ele fará o build, criará os volumes persistentes (`trin_data`, `prometheus_data`, `grafana_data`) e iniciará toda a sua stack.
+
+---
+
+**Login do Grafana:**
+O Grafana iniciará no domínio/porta configurado. 
+Usuário padrão: `admin` / Senha: `admin`
