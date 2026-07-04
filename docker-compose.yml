@@ -9,9 +9,8 @@ services:
       - "http"
       - "--web3-http-address"
       - "http://0.0.0.0:8545"
-      - "--metrics"
-      - "--metrics-port"
-      - "9005"
+      - "--enable-metrics-with-url"
+      - "0.0.0.0:9005"
       - "--mb"
       - "100000"  # 100GB limit
     ports:
