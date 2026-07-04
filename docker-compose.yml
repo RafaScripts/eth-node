@@ -1,0 +1,73 @@
+version: '3.8'
+
+services:
+  trin:
+    image: portalnetwork/trin:latest
+    container_name: trin-node
+    command: 
+      - "--web3-transport"
+      - "http"
+      - "--web3-port"
+      - "8545"
+      - "--metrics"
+      - "--metrics-port"
+      - "9005"
+      - "--mb"
+      - "100000"  # 100GB limit
+    ports:
+      - "8545:8545"
+      - "9005:9005"
+    volumes:
+      - trin_data:/root/.trin
+    restart: unless-stopped
+    networks:
+      - eth-network
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    restart: unless-stopped
+    networks:
+      - eth-network
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    restart: unless-stopped
+    networks:
+      - eth-network
+
+  explorer:
+    image: alethio/ethereum-lite-explorer:latest
+    container_name: eth-lite-explorer
+    environment:
+      # Use the browser's address to connect to the node, so it must be localhost from the user's perspective
+      - APP_NODE_URL=http://localhost:8545
+    ports:
+      - "8081:80"
+    restart: unless-stopped
+    networks:
+      - eth-network
+
+volumes:
+  trin_data:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  eth-network:
+    driver: bridge
