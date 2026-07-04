@@ -26,11 +26,26 @@ services:
   prometheus:
     image: prom/prometheus:latest
     container_name: prometheus
-    volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml
-      - prometheus_data:/prometheus
+    user: root # Precisamos ser root temporariamente para criar o arquivo
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        # Cria a configuração do Prometheus dinamicamente no boot
+        cat <<EOF > /etc/prometheus/prometheus.yml
+        global:
+          scrape_interval: 15s
+        scrape_configs:
+          - job_name: 'trin'
+            static_configs:
+              - targets: ['trin:9005']
+        EOF
+        # Inicia o Prometheus
+        exec /bin/prometheus --config.file=/etc/prometheus/prometheus.yml --storage.tsdb.path=/prometheus
     ports:
       - "9090:9090"
+    volumes:
+      - prometheus_data:/prometheus
     restart: unless-stopped
     networks:
       - eth-network
@@ -42,8 +57,6 @@ services:
       - "3000:3000"
     volumes:
       - grafana_data:/var/lib/grafana
-      - ./grafana/provisioning:/etc/grafana/provisioning
-      - ./grafana/dashboards:/var/lib/grafana/dashboards
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin
       - GF_USERS_ALLOW_SIGN_UP=false
@@ -55,7 +68,7 @@ services:
     image: alethio/ethereum-lite-explorer:latest
     container_name: eth-lite-explorer
     environment:
-      # Use the browser's address to connect to the node, so it must be localhost from the user's perspective
+      # Lembre-se de mudar aqui para o domínio/IP que vai apontar para o Trin
       - APP_NODE_URL=http://localhost:8545
     ports:
       - "8081:80"
