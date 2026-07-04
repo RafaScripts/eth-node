@@ -68,7 +68,7 @@ services:
     container_name: eth-lite-explorer
     environment:
       # Lembre-se de mudar aqui para o domínio/IP que vai apontar para o Trin
-      - APP_NODE_URL=http://localhost:8545
+      - APP_NODE_URL=http://trin:8545
     ports:
       - "8081:80"
     restart: unless-stopped
